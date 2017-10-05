@@ -1,16 +1,24 @@
 package edu.orangecoastcollege.cs273.flagquiz;
 
+import android.content.DialogInterface;
 import android.content.res.AssetManager;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
+import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.security.SecureRandom;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -41,12 +49,30 @@ public class MainActivity extends AppCompatActivity {
         rng = new SecureRandom();
         handler = new Handler();
 
-        // TODO: Get references to GUI components (textviews and imageview)
-        // TODO: Put all 4 buttons in the array (mButtons)
-        // TODO: Set mQuestionNumberTextView's text to the appropriate strings.xml resource
-        // TODO: Load all the countries from the JSON file using the JSONLoader
-        // TODO: Call the method resetQuiz() to start the quiz.
+        // Get references to GUI components (textviews and imageview)
+        mQuestionNumberTextView = (TextView) findViewById(R.id.questionNumberTextView);
+        mFlagImageView = (ImageView) findViewById(R.id.flagImageView);
+        mAnswerTextView = (TextView) findViewById(R.id.answerTextView);
 
+        // Put all 4 buttons in the array (mButtons)
+        mButtons[0] = (Button) findViewById(R.id.button);
+        mButtons[1] = (Button) findViewById(R.id.button2);
+        mButtons[2] = (Button) findViewById(R.id.button3);
+        mButtons[3] = (Button) findViewById(R.id.button4);
+
+        // Set mQuestionNumberTextView's text to the appropriate strings.xml resource
+        mQuestionNumberTextView.setText(getString(R.string.question, 1, FLAGS_IN_QUIZ));
+
+        // Load all the countries from the JSON file using the JSONLoader
+        try {
+            mAllCountriesList = JSONLoader.loadJSONFromAsset(this);
+        }
+        catch (IOException e) {
+            Log.e(TAG, "Error loading JSON file", e);
+        }
+
+        // Call the method resetQuiz() to start the quiz.
+        resetQuiz();
     }
 
     /**
@@ -54,14 +80,30 @@ public class MainActivity extends AppCompatActivity {
      */
     public void resetQuiz() {
 
-        // TODO: Reset the number of correct guesses made
-        // TODO: Reset the total number of guesses the user made
-        // TODO: Clear list of quiz countries (for prior games played)
+        // Reset the number of correct guesses made
+        mCorrectGuesses = 0;
 
-        // TODO: Randomly add FLAGS_IN_QUIZ (10) countries from the mAllCountriesList into the mQuizCountriesList
-        // TODO: Ensure no duplicate countries (e.g. don't add a country if it's already in mQuizCountriesList)
+        // Reset the total number of guesses the user made
+        mTotalGuesses = 0;
 
-        // TODO: Start the quiz by calling loadNextFlag
+        // Clear list of quiz countries (for prior games played)
+        mQuizCountriesList.clear();
+
+        // Randomly add FLAGS_IN_QUIZ (10) countries from the mAllCountriesList into the mQuizCountriesList
+        int size = mAllCountriesList.size();
+        int randomPosition;
+        Country randomCountry;
+        while (mQuizCountriesList.size() < FLAGS_IN_QUIZ) {
+            randomPosition = rng.nextInt(mQuizCountriesList.size());
+            randomCountry = mAllCountriesList.get(randomPosition);
+
+            // Ensure no duplicate countries (e.g. don't add a country if it's already in mQuizCountriesList)
+            if (!mQuizCountriesList.contains(randomCountry))
+                mQuizCountriesList.add(randomCountry);
+        }
+
+        // Start the quiz by calling loadNextFlag
+        loadNextFlag();
     }
 
     /**
@@ -69,26 +111,47 @@ public class MainActivity extends AppCompatActivity {
      * the flag's image and then 4 buttons, one of which contains the correct answer.
      */
     private void loadNextFlag() {
-        // TODO: Initialize the mCorrectCountry by removing the item at position 0 in the mQuizCountries
-        // TODO: Clear the mAnswerTextView so that it doesn't show text from the previous question
-        // TODO: Display current question number in the mQuestionNumberTextView
+        // Initialize the mCorrectCountry by removing the item at position 0 in the mQuizCountries
+        mCorrectCountry = mQuizCountriesList.remove(0);
 
+        // Clear the mAnswerTextView so that it doesn't show text from the previous question
+        mAnswerTextView.setText("");
 
-        // TODO: Use AssetManager to load next image from assets folder
+        // Display current question number in the mQuestionNumberTextView
+        int questionNumber = FLAGS_IN_QUIZ - mQuizCountriesList.size();
+        mQuestionNumberTextView.setText(getString(R.string.question, questionNumber, FLAGS_IN_QUIZ));
+
+        // Use AssetManager to load next image from assets folder
         AssetManager am = getAssets();
 
-        // TODO: Get an InputStream to the asset representing the next flag
-        // TODO: and try to use the InputStream to create a Drawable
-        // TODO: The file name can be retrieved from the correct country's file name.
-        // TODO: Set the image drawable to the correct flag.
+        // Get an InputStream to the asset representing the next flag
+        // and try to use the InputStream to create a Drawable
+        // The file name can be retrieved from the correct country's file name.
+        // Set the image drawable to the correct flag.
+        try {
+            InputStream stream = am.open(mCorrectCountry.getFileName());
+            Drawable image = Drawable.createFromStream(stream, mCorrectCountry.getName());
+            mFlagImageView.setImageDrawable(image);
+        } catch (IOException e) {
+            Log.e(TAG, "Error loading image: " + mCorrectCountry.getFileName());
+        }
 
-        // TODO: Shuffle the order of all the countries (use Collections.shuffle)
+        // Shuffle the order of all the countries (use Collections.shuffle)
+        do {
+            Collections.shuffle(mAllCountriesList);
+        }
+        while (mAllCountriesList.subList(0, mButtons.length).contains(mCorrectCountry));
 
-        // TODO: Loop through all 4 buttons, enable them all and set them to the first 4 countries
-        // TODO: in the all countries list
+        // Loop through all 4 buttons, enable them all and set them to the first 4 countries
+        // in the all countries list
+        for (int i = 0; i < mButtons.length; ++i) {
+            mButtons[i].setEnabled(true);
 
+            mButtons[i].setText(mAllCountriesList.get(i).getName());
+        }
 
-        // TODO: After the loop, randomly replace one of the 4 buttons with the name of the correct country
+        // After the loop, randomly replace one of the 4 buttons with the name of the correct country
+        mButtons[rng.nextInt(mButtons.length)].setText(mCorrectCountry.getName());
 
     }
 
@@ -100,11 +163,54 @@ public class MainActivity extends AppCompatActivity {
      * @param v
      */
     public void makeGuess(View v) {
-        // TODO: Downcast the View v into a Button (since it's one of the 4 buttons)
-        // TODO: Get the country's name from the text of the button
+        // Downcast the View v into a Button (since it's one of the 4 buttons)
+        Button clickedButton = (Button) v;
 
-        // TODO: If the guess matches the correct country's name, increment the number of correct guesses,
-        // TODO: then display correct answer in green text.  Also, disable all 4 buttons (can't keep guessing once it's correct)
+        // Get the country's name from the text of the button
+        String guess = clickedButton.getText().toString();
+
+        // If the guess matches the correct country's name, increment the number of correct guesses,
+        // then display correct answer in green text.
+        if (guess.equals(mCorrectCountry.getName())) {
+            // Also, disable all 4 buttons (can't keep guessing once it's correct)
+            for (Button b : mButtons) b.setEnabled(false);
+
+            mCorrectGuesses++;
+            mAnswerTextView.setText(mCorrectCountry.getName());
+            mAnswerTextView.setTextColor(ContextCompat.getColor(this, R.color.correct_answer));
+
+            if (mCorrectGuesses < FLAGS_IN_QUIZ) {
+                // Wait 2 seconds, then load next flag
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        loadNextFlag();
+                    }
+                }, 2000);
+            }
+            else {
+                // Show an AlertDialog
+                AlertDialog.Builder builder = new AlertDialog.Builder(this);
+                // TODO: fix percent format
+                builder.setMessage(getString(R.string.results, mTotalGuesses, (double) mCorrectGuesses/mTotalGuesses));
+                builder.setPositiveButton(getString(R.string.reset_quiz), new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        resetQuiz();
+                    }
+                });
+                builder.setCancelable(false);
+                builder.create();
+                builder.show();
+            }
+
+        }
+        else {
+            clickedButton.setEnabled(false);
+            mAnswerTextView.setText(getString(R.string.incorrect_answer));
+            mAnswerTextView.setTextColor(ContextCompat.getColor(this, R.color.incorrect_answer));
+        }
+
         // TODO: Nested in this decision, if the user has completed all 10 questions, show an AlertDialog
         // TODO: with the statistics and an option to Reset Quiz
 
