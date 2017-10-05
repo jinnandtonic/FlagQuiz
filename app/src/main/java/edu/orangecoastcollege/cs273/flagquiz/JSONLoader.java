@@ -38,10 +38,14 @@ public class JSONLoader {
             JSONObject jsonRootObject = new JSONObject(json);
             JSONArray allCountriesJSON = jsonRootObject.getJSONArray("Countries");
 
-            // TODO: Loop through all the countries in the JSON data, create a Country
-            // TODO: object for each and add the object to the allCountriesList
-
-
+            int length = allCountriesJSON.length();
+            for (int i = 0; i < length; ++i) {
+                JSONObject countryObject = allCountriesJSON.getJSONObject(i);
+                String name = countryObject.getString("Name");
+                String region = countryObject.getString("Region");
+                Country country = new Country(name, region);
+                allCountriesList.add(country);
+            }
         } catch (JSONException e) {
             Log.e("Flag Quiz", e.getMessage());
         }
