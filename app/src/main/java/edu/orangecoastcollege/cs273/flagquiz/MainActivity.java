@@ -94,7 +94,7 @@ public class MainActivity extends AppCompatActivity {
         int randomPosition;
         Country randomCountry;
         while (mQuizCountriesList.size() < FLAGS_IN_QUIZ) {
-            randomPosition = rng.nextInt(mQuizCountriesList.size());
+            randomPosition = rng.nextInt(mAllCountriesList.size());
             randomCountry = mAllCountriesList.get(randomPosition);
 
             // Ensure no duplicate countries (e.g. don't add a country if it's already in mQuizCountriesList)
