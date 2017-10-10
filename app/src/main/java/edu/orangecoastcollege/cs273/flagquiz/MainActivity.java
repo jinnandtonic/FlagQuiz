@@ -1,6 +1,7 @@
 package edu.orangecoastcollege.cs273.flagquiz;
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.res.AssetManager;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -10,6 +11,7 @@ import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
@@ -223,7 +225,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Override onCreateOptionsMenu to inflate the settings menu
+     * Override onCreateOptionsMenu to inflate the settings menu within MainActivity
      * @param menu
      * @return
      */
@@ -231,5 +233,20 @@ public class MainActivity extends AppCompatActivity {
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_settings, menu);
         return super.onCreateOptionsMenu(menu);
+    }
+
+    /**
+     * Responds to user clicking the Settings menu icon
+     * @param item
+     * @return
+     */
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        // Make a new Intent going to SettingsActivity
+        Intent settingsIntent = new Intent(this, SettingsActivity.class);
+        startActivity(settingsIntent);
+
+        return super.onOptionsItemSelected(item);
     }
 }
