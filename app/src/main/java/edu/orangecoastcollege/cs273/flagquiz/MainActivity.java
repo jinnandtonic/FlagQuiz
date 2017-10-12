@@ -123,13 +123,13 @@ public class MainActivity extends AppCompatActivity {
         // Clear list of quiz countries (for prior games played)
         mQuizCountriesList.clear();
 
-        // Randomly add FLAGS_IN_QUIZ (10) countries from the mAllCountriesList into the mQuizCountriesList
-        int size = mAllCountriesList.size();
+        // Randomly add FLAGS_IN_QUIZ (10) countries from the mFilteredCountriesList into the mQuizCountriesList
+        int size = mFilteredCountriesList.size();
         int randomPosition;
         Country randomCountry;
         while (mQuizCountriesList.size() < FLAGS_IN_QUIZ) {
-            randomPosition = rng.nextInt(mAllCountriesList.size());
-            randomCountry = mAllCountriesList.get(randomPosition);
+            randomPosition = rng.nextInt(size);
+            randomCountry = mFilteredCountriesList.get(randomPosition);
 
             // Ensure no duplicate countries (e.g. don't add a country if it's already in mQuizCountriesList)
             if (!mQuizCountriesList.contains(randomCountry))
@@ -172,7 +172,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Shuffle the order of all the countries (use Collections.shuffle)
         do {
-            Collections.shuffle(mAllCountriesList);
+            Collections.shuffle(mFilteredCountriesList);
         }
         while (mAllCountriesList.subList(0, mChoices).contains(mCorrectCountry));
 
@@ -180,8 +180,7 @@ public class MainActivity extends AppCompatActivity {
         // in the all countries list
         for (int i = 0; i < mChoices; ++i) {
             mButtons[i].setEnabled(true);
-
-            mButtons[i].setText(mAllCountriesList.get(i).getName());
+            mButtons[i].setText(mFilteredCountriesList.get(i).getName());
         }
 
         // After the loop, randomly replace one of the 4 buttons with the name of the correct country
