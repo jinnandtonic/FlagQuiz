@@ -5,6 +5,9 @@ import android.preference.PreferenceFragment;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 
+/**
+ * Allows the user to adjust quiz settings such as number of choices and regions
+ */
 public class SettingsActivity extends AppCompatActivity {
 
     /**

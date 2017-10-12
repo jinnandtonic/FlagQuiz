@@ -27,6 +27,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Creates a quiz and displays it in the view
+ */
 public class MainActivity extends AppCompatActivity {
 
     private static final String TAG = "Flag Quiz";
