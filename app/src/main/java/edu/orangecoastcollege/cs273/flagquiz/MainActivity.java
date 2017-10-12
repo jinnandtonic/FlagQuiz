@@ -2,6 +2,7 @@ package edu.orangecoastcollege.cs273.flagquiz;
 
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -15,7 +16,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,9 +33,11 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int FLAGS_IN_QUIZ = 10;
 
-    private Button[] mButtons = new Button[4];
+    private Button[] mButtons = new Button[8];
+    private LinearLayout[] mLayouts = new LinearLayout[4];
     private List<Country> mAllCountriesList;  // all the countries loaded from JSON
     private List<Country> mQuizCountriesList; // countries in current quiz (just 10 of them)
+    private List<Country> mFilteredCountriesList; // countries filtered by the selected region
     private Country mCorrectCountry; // correct country for the current question
     private int mTotalGuesses; // number of total guesses made
     private int mCorrectGuesses; // number of correct guesses
@@ -43,10 +48,21 @@ public class MainActivity extends AppCompatActivity {
     private ImageView mFlagImageView; // displays a flag
     private TextView mAnswerTextView; // displays correct answer
 
+    private int mChoices; // stores how many choices (buttons) are selected
+    private String mRegion; // stores which region is selected
+
+    // Keys used in preferences.xml
+    private static final String CHOICES = "pref_numberOfChoices";
+    private static final String REGIONS = "regions";
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        // Register the OnSharedPreferencesChangeListener
+        SharedPreferences mPreferences = android.preference.PreferenceManager.getDefaultSharedPreferences(this);
+        mPreferences.registerOnSharedPreferenceChangeListener(mPreferenceChangeListener);
 
         mQuizCountriesList = new ArrayList<>(FLAGS_IN_QUIZ);
         rng = new SecureRandom();
@@ -57,11 +73,21 @@ public class MainActivity extends AppCompatActivity {
         mFlagImageView = (ImageView) findViewById(R.id.flagImageView);
         mAnswerTextView = (TextView) findViewById(R.id.answerTextView);
 
-        // Put all 4 buttons in the array (mButtons)
+        // Put all 8 buttons in the array (mButtons)
         mButtons[0] = (Button) findViewById(R.id.button);
         mButtons[1] = (Button) findViewById(R.id.button2);
         mButtons[2] = (Button) findViewById(R.id.button3);
         mButtons[3] = (Button) findViewById(R.id.button4);
+        mButtons[4] = (Button) findViewById(R.id.button5);
+        mButtons[5] = (Button) findViewById(R.id.button6);
+        mButtons[6] = (Button) findViewById(R.id.button7);
+        mButtons[7] = (Button) findViewById(R.id.button8);
+
+        // Initialize LinearLayouts
+        mLayouts[0] = (LinearLayout) findViewById(R.id.row1LinearLayout);
+        mLayouts[1] = (LinearLayout) findViewById(R.id.row2LinearLayout);
+        mLayouts[2] = (LinearLayout) findViewById(R.id.row3LinearLayout);
+        mLayouts[3] = (LinearLayout) findViewById(R.id.row4LinearLayout);
 
         // Set mQuestionNumberTextView's text to the appropriate strings.xml resource
         mQuestionNumberTextView.setText(getString(R.string.question, 1, FLAGS_IN_QUIZ));
@@ -73,6 +99,11 @@ public class MainActivity extends AppCompatActivity {
         catch (IOException e) {
             Log.e(TAG, "Error loading JSON file", e);
         }
+
+        mRegion = mPreferences.getString(REGIONS, "All");
+        mChoices = Integer.parseInt(mPreferences.getString(CHOICES, "4"));
+        updateChoices();
+        updateRegion();
 
         // Call the method resetQuiz() to start the quiz.
         resetQuiz();
@@ -143,18 +174,18 @@ public class MainActivity extends AppCompatActivity {
         do {
             Collections.shuffle(mAllCountriesList);
         }
-        while (mAllCountriesList.subList(0, mButtons.length).contains(mCorrectCountry));
+        while (mAllCountriesList.subList(0, mChoices).contains(mCorrectCountry));
 
         // Loop through all 4 buttons, enable them all and set them to the first 4 countries
         // in the all countries list
-        for (int i = 0; i < mButtons.length; ++i) {
+        for (int i = 0; i < mChoices; ++i) {
             mButtons[i].setEnabled(true);
 
             mButtons[i].setText(mAllCountriesList.get(i).getName());
         }
 
         // After the loop, randomly replace one of the 4 buttons with the name of the correct country
-        mButtons[rng.nextInt(mButtons.length)].setText(mCorrectCountry.getName());
+        mButtons[rng.nextInt(mChoices)].setText(mCorrectCountry.getName());
 
     }
 
@@ -248,5 +279,58 @@ public class MainActivity extends AppCompatActivity {
         startActivity(settingsIntent);
 
         return super.onOptionsItemSelected(item);
+    }
+
+    SharedPreferences.OnSharedPreferenceChangeListener mPreferenceChangeListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+        @Override
+        public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+            // Figure out what key changed
+            switch (key) {
+                case CHOICES:
+                    // Read the number of choices from shared preferences
+                    mChoices = Integer.parseInt(sharedPreferences.getString(CHOICES, "4"));
+                    // Call method to update choices (visually)
+                    updateChoices();
+                    resetQuiz();
+                    break;
+                case REGIONS:
+                    mRegion = sharedPreferences.getString(REGIONS, "All");
+                    updateRegion();
+                    resetQuiz();
+            }
+
+            // Notify the user that the quiz will restart
+            Toast.makeText(MainActivity.this, R.string.restarting_quiz, Toast.LENGTH_SHORT).show();
+        }
+    };
+
+    private void updateChoices() {
+        // Enable/Show all the linear layouts < mChoices / 2
+        // Disable all the others
+        // Loop through all the linear layouts
+        for (int i = 0; i < mLayouts.length; ++i) {
+            if (i < mChoices / 2) {
+                mLayouts[i].setEnabled(true);
+                mLayouts[i].setVisibility(View.VISIBLE);
+            }
+            else {
+                mLayouts[i].setEnabled(false);
+                mLayouts[i].setVisibility(View.GONE);
+            }
+        }
+    }
+
+    private void updateRegion() {
+        // Make a decision
+        // If the region is "All", filtered list is the same as all
+        if (mRegion.equals("All")) {
+            mFilteredCountriesList = new ArrayList<>(mAllCountriesList);
+        }
+        else {
+            mFilteredCountriesList = new ArrayList<>();
+            for (Country c : mAllCountriesList)
+                if (c.getRegion().equals(mRegion))
+                    mFilteredCountriesList.add(c);
+        }
     }
 }

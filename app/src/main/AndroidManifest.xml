@@ -18,7 +18,6 @@
         </activity>
         <activity android:name=".SettingsActivity"
             android:parentActivityName=".MainActivity"
-            android:theme="@style/AppTheme.NoActionBar"
             >
 
         </activity>
