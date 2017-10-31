@@ -58,6 +58,13 @@ public class MainActivity extends AppCompatActivity {
     private static final String CHOICES = "pref_numberOfChoices";
     private static final String REGIONS = "regions";
 
+    /**
+     * Initializes <code>MainActivity</code> by inflating its UI.
+     *
+     * @param savedInstanceState Bundle containing the data it recently supplied in
+     *                           onSaveInstanceState(Bundle) if activity was reinitialized after
+     *                           being previously shut down. Otherwise it is null.
+     */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
